@@ -606,7 +606,4 @@ def activity(check = False):
     else:
         return f"```Active confirmations:\n{currentConfirming}\nTic Tac Toe:\n{currentTTTgames}\nUltimate Tic Tac Toe:\n{currentUltimateTTTgames}\nConnect Four:\n{currentC4games}\nRock Paper Scissors:\n{currentRPSgames}\nChess:\n{currentChessGames}```"
 
-try:
-    client.run(token)
-except:
-    pass
+client.run(token)

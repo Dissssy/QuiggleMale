@@ -17,7 +17,7 @@ currentRPSgames = {}
 currentChessGames = {}
 
 config = json.load(open("./config.json"))
-owner = config["owner"]
+owner = int(config["owner"])
 if testmode:
     token = config["testtoken"]
 else:
@@ -447,7 +447,7 @@ async def rockpaperscissorsGame(ctx, gameid, players, rounds):
 async def chessGame(ctx, gameid, players, singleplayer):
     global currentChessGames
     currentChessGames[gameid] = chessClass.chess(ctx, players, gameid, singleplayer)
-    await currentChessGames[gameid]._construct_message()
+    await currentChessGames[gameid].constructmessage()
     while True:
         interaction = await client.wait_for("select_option", check = lambda i: i.component[0].value.startswith(gameid))
         if interaction.component[0].value.endswith("forfeit"):
@@ -491,6 +491,9 @@ async def chessGame(ctx, gameid, players, singleplayer):
                     await interaction.respond(content = player[1])
                 except Exception as e:
                     print(str(e))
+    # except Exception as e:
+    #     await ctx.send(str(e))
+    #     currentChessGames.pop(gameid)
 
 async def gameoverchecker(client, type):
     while True:

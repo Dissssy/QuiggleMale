@@ -1,5 +1,8 @@
 import random
-from discord_components import ActionRow, Select, SelectOption, Button, ButtonStyle
+from discord_components import ActionRow, Select, SelectOption
+import discord
+from io import BytesIO
+from PIL import Image
 from copy import deepcopy
 
 class chess:
@@ -351,6 +354,19 @@ class chess:
             string += ":black_large_square:<:a:878071110481117205><:b:878071110544003114><:c:878071110862766120><:d:878071110455939104><:e:878071110749532171><:f:878071110510465106><:g:878071110996987935><:h:878071110892146728>:black_large_square:\n"
         return string
 
+    def constructboardimage(self):
+        # ./resources/{color}{type}.png
+        image = Image.open('./resources/base.png').convert('RGBA')
+        pieces = {}
+        for i in range(8):
+            for j in range(8):
+                if self.gamestate[i][j] is not None:
+                    if f"{self.gamestate[i][j]['color']}{self.gamestate[i][j]['type']}" not in pieces:
+                        pieces[f"{self.gamestate[i][j]['color']}{self.gamestate[i][j]['type']}"] = Image.open(f'./resources/{self.gamestate[i][j]["color"]}{self.gamestate[i][j]["type"]}.png').convert('RGBA')
+                    image.paste(pieces[f"{self.gamestate[i][j]['color']}{self.gamestate[i][j]['type']}"], ((j * 100) + 50, (i * 100) + 50), mask = pieces[f"{self.gamestate[i][j]['color']}{self.gamestate[i][j]['type']}"])
+        image = image.resize((400, 400), Image.NEAREST)
+        return image
+
     def canMoveTo(self, space):
         piecesCapture = {0 : [], 1 : [], 2 : [], 3 : [], 4 : [], 5 : []}
         for i in range(8):
@@ -467,17 +483,31 @@ class chess:
         piss = ""
         if check is not None:
             piss = ", you're in check!"
+        boardstring = ""
+        if False:
+            boardstring = self.constructboardstring()
+
         if self.message == None:
-            self.message = await self.ctx.send(f"{self.constructboardstring()}{self.intToColor[self.currentplayer]}s turn ({self.players[self.currentplayer].mention})\n-- {fart}{piss}", components = components)
+            with BytesIO() as image_binary:
+                self.constructboardimage().save(image_binary, 'PNG')
+                image_binary.seek(0)
+                self.message = await self.ctx.send(f"{boardstring}{self.intToColor[self.currentplayer]}s turn ({self.players[self.currentplayer].mention})\n-- {fart}{piss}", components = components, file = discord.File(fp=image_binary, filename='image.png'))
         else:
             if self.winner is None:
                 if piece is None and promote == False and moveQueen is None and check is None and checkType is None and not back:
                     await self.message.delete()
-                    self.message = await self.ctx.send(f"{self.constructboardstring()}{self.intToColor[self.currentplayer]}s turn ({self.players[self.currentplayer].mention})\n-- {fart}{piss}", components = components)
+                    with BytesIO() as image_binary:
+                        self.constructboardimage().save(image_binary, 'PNG')
+                        image_binary.seek(0)
+                        self.message = await self.ctx.send(f"{boardstring}{self.intToColor[self.currentplayer]}s turn ({self.players[self.currentplayer].mention})\n-- {fart}{piss}", components = components, file = discord.File(fp=image_binary, filename='image.png'))
                 else:
-                    await self.message.edit(f"{self.constructboardstring()}{self.intToColor[self.currentplayer]}s turn ({self.players[self.currentplayer].mention})\n-- {fart}{piss}", components = components)
+                    await self.message.edit(f"{boardstring}{self.intToColor[self.currentplayer]}s turn ({self.players[self.currentplayer].mention})\n-- {fart}{piss}", components = components)
             else:
-                await self.message.edit(f"{self.constructboardstring()}WINNER: {self.intToColor[(self.currentplayer + 1) % 2]} ({self.winner.mention})", components = components)
+                await self.message.delete()
+                with BytesIO() as image_binary:
+                    self.constructboardimage().save(image_binary, 'PNG')
+                    image_binary.seek(0)
+                    self.message = await self.ctx.send(f"{boardstring}WINNER: {self.intToColor[(self.currentplayer + 1) % 2]} ({self.winner.mention})", components = components, file = discord.File(fp=image_binary, filename='image.png'))
 
     async def set(self, value):
         values = value.split("|")

@@ -90,6 +90,8 @@ class chess:
                         if gamestate[piece[0] + (direction[0] * (i + 1))][piece[1] + (direction[1] * (i + 1))] is not None:
                             if not gamestate[piece[0] + (direction[0] * (i + 1))][piece[1] + (direction[1] * (i + 1))]['color'] == gamestate[piece[0]][piece[1]]['color']:
                                 moves.append([piece[0] + (direction[0] * (i + 1)), piece[1] + (direction[1] * (i + 1))])
+                                if gamestate[piece[0] + (direction[0] * (i + 1))][piece[1] + (direction[1] * (i + 1))]['type'] == 5:
+                                    captures[str([piece[0] + (direction[0] * (i + 2)), piece[1] + (direction[1] * (i + 2))])] = True
                             break
                         else:
                             moves.append([piece[0] + (direction[0] * (i + 1)), piece[1] + (direction[1] * (i + 1))])
@@ -110,6 +112,8 @@ class chess:
                         if gamestate[piece[0] + (direction[0] * (i + 1))][piece[1] + (direction[1] * (i + 1))] is not None:
                             if not gamestate[piece[0] + (direction[0] * (i + 1))][piece[1] + (direction[1] * (i + 1))]['color'] == gamestate[piece[0]][piece[1]]['color']:
                                 moves.append([piece[0] + (direction[0] * (i + 1)), piece[1] + (direction[1] * (i + 1))])
+                                if gamestate[piece[0] + (direction[0] * (i + 1))][piece[1] + (direction[1] * (i + 1))]['type'] == 5:
+                                    captures[str([piece[0] + (direction[0] * (i + 2)), piece[1] + (direction[1] * (i + 2))])] = True
                             break
                         else:
                             moves.append([piece[0] + (direction[0] * (i + 1)), piece[1] + (direction[1] * (i + 1))])
@@ -122,6 +126,8 @@ class chess:
                         if gamestate[piece[0] + (direction[0] * (i + 1))][piece[1] + (direction[1] * (i + 1))] is not None:
                             if not gamestate[piece[0] + (direction[0] * (i + 1))][piece[1] + (direction[1] * (i + 1))]['color'] == gamestate[piece[0]][piece[1]]['color']:
                                 dirmoves.append([piece[0] + (direction[0] * (i + 1)), piece[1] + (direction[1] * (i + 1))])
+                                if gamestate[piece[0] + (direction[0] * (i + 1))][piece[1] + (direction[1] * (i + 1))]['type'] == 5:
+                                    captures[str([piece[0] + (direction[0] * (i + 2)), piece[1] + (direction[1] * (i + 2))])] = True
                             break
                         else:
                             dirmoves.append([piece[0] + (direction[0] * (i + 1)), piece[1] + (direction[1] * (i + 1))])
@@ -175,6 +181,8 @@ class chess:
                         i -= 1
                         x -= 1
                     i += 1
+                if gamestate[piece[0]][piece[1]]['type'] == 5:
+                    print(moves)
 
         if gamestate[piece[0]][piece[1]]['type'] == 4:
             moveCount = 0
@@ -450,10 +458,17 @@ class chess:
         else:
             if not self.cantUncheck:
                 if checkType is None:
-                    self.checkpieces = self.uncheckHelper(piece)
+                    if self.checkpieces is None:
+                        self.checkpieces = self.uncheckHelper(piece)
                     for i in range(6):
-                        if len(self.checkpieces[i]) > 0:
-                            options.append(SelectOption(label = f"Escape check with a {self.intToType[i]}", value = f"{self.gameid}:checktype|{i}"))
+                        if not i == 5:
+                            if len(self.checkpieces[i]) > 0:
+                                options.append(SelectOption(label = f"Escape check with a {self.intToType[i]}", value = f"{self.gameid}:checktype|{i}"))
+                    for move in self.gamestate[piece[0]][piece[1]]['moves']:
+                        poop = ""
+                        if self.gamestate[move[0]][move[1]] is not None:
+                            poop = f" and capture {self.intToType[self.gamestate[move[0]][move[1]]['type']]}"
+                        options.append(SelectOption(label = f"Move King {self.intToLetter[piece[1]]}{piece[0] + 1} to {self.intToLetter[move[1]]}{move[0] + 1}{poop}", value = f"{self.gameid}:move|{piece[0]}{piece[1]}|{move[0]}{move[1]}"))
                 else:
                     for piecemove in self.checkpieces[checkType]:
                         apiece, move = piecemove
@@ -461,6 +476,7 @@ class chess:
                         if self.gamestate[move[0]][move[1]] is not None:
                             poop = f" and capture {self.intToType[self.gamestate[move[0]][move[1]]['type']]}"
                         options.append(SelectOption(label = f"{self.intToLetter[apiece[1]]}{apiece[0] + 1} to {self.intToLetter[move[1]]}{move[0] + 1}{poop}", value = f"{self.gameid}:move|{apiece[0]}{apiece[1]}|{move[0]}{move[1]}"))
+                    options.append(SelectOption(label = f"Back", value = f"{self.gameid}:move|{piece[0]}{piece[1]}|back"))
         if self.check and len(options) == 0:
             self.winner = self.players[(self.currentplayer + 1) % 2]
             options.append(SelectOption(label = f"Game over", value = f"{self.gameid}:gameover"))
@@ -515,7 +531,10 @@ class chess:
             await self.constructmessage([int(values[1][0]), int(values[1][1])])
         elif values[0] == "move":
             if values[2] == "back":
-                await self.constructmessage(back = True)
+                if self.check is None:
+                    await self.constructmessage(back = True)
+                else:
+                    await self.constructmessage(self.kings[self.currentplayer], back = True, check = True)
             else:
                 self.check = None
                 self.checkpieces = None
@@ -523,7 +542,7 @@ class chess:
                 self.gamestate[int(values[1][0])][int(values[1][1])] = None
                 self.gamestate[int(values[2][0])][int(values[2][1])]['firstmove'] = False
                 if self.gamestate[int(values[2][0])][int(values[2][1])]['type'] == 5:
-                    self.kings[self.gamestate[int(values[2][0])][int(values[2][1])]['color']] = [values[2][0]][values[2][1]]
+                    self.kings[self.gamestate[int(values[2][0])][int(values[2][1])]['color']] = [int(values[2][0]), int(values[2][1])]
                 self.gamestate = self.checkAllMoves(self.gamestate)
                 self.check, self.cantUncheck = self.checkCheck(self.gamestate)
                 if self.promote == None:

@@ -1,13 +1,14 @@
-
 import random
 from discord_components import ActionRow, Select, SelectOption, Button, ButtonStyle
 from copy import deepcopy
 
 class chess:
-    boardEmotes = ["<:r:878210060705218601>", "<:bl:878210060843630602>"]
+    # boardEmotes = ["<:r:878210060705218601>", "<:bl:878210060843630602>"]
+    boardEmotes = [":red_square:", ":black_large_square:"]
     intToLetter = ["A", "B", "C", "D", "E", "F", "G", "H"]
     intToType = ["Pawn", "Rook", "Knight", "Bishop", "Queen", "King"]
-    intToEmote = [None , "<:1:878210060814262293>", "<:2:878210061007204352>", "<:3:878210060977840128>", "<:4:878210061019791406>", "<:5:878210060558401547>", "<:6:878210060818464779>", "<:7:878210060826869760>", "<:8:878210060856229938>"]
+    # intToEmote = [False , "<:1:878210060814262293>", "<:2:878210061007204352>", "<:3:878210060977840128>", "<:4:878210061019791406>", "<:5:878210060558401547>", "<:6:878210060818464779>", "<:7:878210060826869760>", "<:8:878210060856229938>"]
+    intToEmote = [True , ":one:", ":two:", ":three:", ":four:", ":five:", ":six:", ":seven:", ":eight:"]
     intToColor = ["White", "Black"]
     pieceEmoteStrings = [[["<:wPr:878232501603172423>", "<:wRr:878232501905154108>", "<:wNr:878232501728968785>", "<:wBr:878232501926121503>", "<:wQr:878232501976449085>", "<:wKr:878232501921927188>"], ["<:bPr:878232501582200833>", "<:bRr:878232501540257813>", "<:bNr:878232501909352478>", "<:bBr:878232501640917032>", "<:bQr:878232501531869246>", "<:bKr:878232504543359016>"]], [["<:wPb:878236200450801714>", "<:wRb:878236200417230858>", "<:wNb:878236200274628658>", "<:wBb:878236735060975626>", "<:wQb:878236200362709043>", "<:wKb:878236200480170044>"], ["<:bPb:878236200165580910>", "<:bRb:878236200136216576>", "<:bNb:878236200173989958>", "<:bBb:878236200304005121>", "<:bQb:878236200249458708>", "<:bKb:878236200228503552>"]]]
     promotions = [3, 2, 1, 4]
@@ -44,7 +45,23 @@ class chess:
                     else:
                         dolast[(gamestate[i][j]['color'] + self.currentplayer) % 2] = [i, j]
         for piece in dolast:
-            gamestate[piece[0]][piece[1]]['moves'], gamestate[piece[0]][piece[1]]['movecount'], gamestate[piece[0]][piece[1]]['captures'] = self.checkMoves([piece[0], piece[1]], gamestate, checking)
+            if piece is not None:
+                gamestate[piece[0]][piece[1]]['moves'], gamestate[piece[0]][piece[1]]['movecount'], gamestate[piece[0]][piece[1]]['captures'] = self.checkMoves([piece[0], piece[1]], gamestate, checking)
+        return gamestate
+
+    def checkAllMovesCopy(self, gamestate, checking = True):
+        dolast = [None, None]
+        for i in range(8):
+            for j in range(8):
+                if gamestate[i][j] is not None:
+                    if not gamestate[i][j]['type'] == 5:
+                        gamestate[i][j]['moves'], gamestate[i][j]['movecount'], gamestate[i][j]['captures'] = self.checkMovesCopy([i, j], gamestate, checking)
+                    else:
+                        dolast[(gamestate[i][j]['color'] + self.currentplayer) % 2] = [i, j]
+        for piece in dolast:
+            if piece is not None:
+                gamestate[piece[0]][piece[1]]['moves'], gamestate[piece[0]][piece[1]]['movecount'], gamestate[piece[0]][piece[1]]['captures'] = self.checkMovesCopy([piece[0], piece[1]], gamestate, checking)
+        return gamestate
 
     def checkMoves(self, piece, gamestate, checking = False):
         captures = {}
@@ -127,27 +144,35 @@ class chess:
                                 moves.append([piece[0] + direction[0], piece[1] + direction[1]])
                         else:
                             moves.append([piece[0] + direction[0], piece[1] + direction[1]])
-
-        if not checking and self.check is not None:
-            if gamestate[piece[0]][piece[1]]['color'] == gamestate[self.check[0]][self.check[1]]['color']:
-                if gamestate[piece[0]][piece[1]]['type'] == 4:
-                    uncheck = False
-                    for i in range(8):
-                        for move in moves[i]:
-                            if self.checkUncheck(piece, move):
-                                moves = [[] for i in range(8)]
-                                captures = {}
-                                uncheck = True
-                                break
-                        if uncheck:
-                            break
-                else:
-                    for move in moves:
+        if not gamestate[piece[0]][piece[1]]['color'] == self.currentplayer:
+            if gamestate[piece[0]][piece[1]]['type'] == 4:
+                for i in range(8):
+                    for index, move in enumerate(moves[i]):
                         if self.checkUncheck(piece, move):
-                            moves = []
-                            captures = {}
-                            break
-        
+                            captures[str(move)] = False
+                            moves[i][index] = None
+                    j = 0
+                    x = len(moves[i])
+                    while j < x:
+                        if moves[i][j] is None:
+                            moves[i].pop(j)
+                            j -= 1
+                            x -= 1
+                        j += 1
+            else:
+                for index, move in enumerate(moves):
+                    if self.checkUncheck(piece, move):
+                        captures[str(move)] = False
+                        moves[index] = None
+                i = 0
+                x = len(moves)
+                while i < x:
+                    if moves[i] is None:
+                        moves.pop(i)
+                        i -= 1
+                        x -= 1
+                    i += 1
+
         if gamestate[piece[0]][piece[1]]['type'] == 4:
             moveCount = 0
             for i in range(8):
@@ -158,7 +183,98 @@ class chess:
             self.promote = piece
         return moves, moveCount, captures
 
-    def checkCheck(self, gamestate):
+    def checkMovesCopy(self, piece, gamestate, checking = True):
+        captures = {}
+        moves = []
+        if gamestate[piece[0]][piece[1]]['type'] == 0:
+            direction = ((gamestate[piece[0]][piece[1]]['color'] * 2) - 1) * -1
+            if piece[0] + direction >= 0 and piece[0] + direction <= 7:
+                if gamestate[piece[0] + direction][piece[1]] is None:
+                    moves.append([piece[0] + direction, piece[1]])
+                    if gamestate[piece[0]][piece[1]]['firstmove'] and gamestate[piece[0] + direction + direction][piece[1]] is None:
+                        moves.append([piece[0] + direction + direction, piece[1]])
+                for i in range(2):
+                    if (piece[1] + ((i * 2) - 1) >= 0 and piece[1] + ((i * 2) - 1) <= 7):
+                        captures[str([piece[0] + direction, piece[1] + ((i * 2) - 1)])] = True
+                        if gamestate[piece[0] + direction][piece[1] + ((i * 2) - 1)] is not None:
+                            if not gamestate[piece[0] + direction][piece[1] + ((i * 2) - 1)]['color'] == gamestate[piece[0]][piece[1]]['color']:
+                                moves.append([piece[0] + direction, piece[1] + ((i * 2) - 1)])
+        elif gamestate[piece[0]][piece[1]]['type'] == 1:
+            for direction in self.rookDirections:
+                for i in range(8):
+                    if piece[0] + (direction[0] * (i + 1)) >= 0 and piece[0] + (direction[0] * (i + 1)) <= 7 and piece[1] + (direction[1] * (i + 1)) >= 0 and piece[1] + (direction[1] * (i + 1)) <= 7:
+                        captures[str([piece[0] + (direction[0] * (i + 1)), piece[1] + (direction[1] * (i + 1))])] = True
+                        if gamestate[piece[0] + (direction[0] * (i + 1))][piece[1] + (direction[1] * (i + 1))] is not None:
+                            if not gamestate[piece[0] + (direction[0] * (i + 1))][piece[1] + (direction[1] * (i + 1))]['color'] == gamestate[piece[0]][piece[1]]['color']:
+                                moves.append([piece[0] + (direction[0] * (i + 1)), piece[1] + (direction[1] * (i + 1))])
+                            break
+                        else:
+                            moves.append([piece[0] + (direction[0] * (i + 1)), piece[1] + (direction[1] * (i + 1))])
+        elif gamestate[piece[0]][piece[1]]['type'] == 2:
+            for direction in self.knightDirections:
+                if piece[0] + direction[0] >= 0 and piece[0] + direction[0] <= 7 and piece[1] + direction[1] >= 0 and piece[1] + direction[1] <= 7:
+                    captures[str([piece[0] + direction[0], piece[1] + direction[1]])] = True
+                    if gamestate[piece[0] + direction[0]][piece[1] + direction[1]] is not None:
+                        if not gamestate[piece[0] + direction[0]][piece[1] + direction[1]]['color'] == gamestate[piece[0]][piece[1]]['color']:
+                            moves.append([piece[0] + direction[0], piece[1] + direction[1]])
+                    else:
+                        moves.append([piece[0] + direction[0], piece[1] + direction[1]])
+        elif gamestate[piece[0]][piece[1]]['type'] == 3:
+            for direction in self.bishopDirections:
+                for i in range(8):
+                    if piece[0] + (direction[0] * (i + 1)) >= 0 and piece[0] + (direction[0] * (i + 1)) <= 7 and piece[1] + (direction[1] * (i + 1)) >= 0 and piece[1] + (direction[1] * (i + 1)) <= 7:
+                        captures[str([piece[0] + (direction[0] * (i + 1)), piece[1] + (direction[1] * (i + 1))])] = True
+                        if gamestate[piece[0] + (direction[0] * (i + 1))][piece[1] + (direction[1] * (i + 1))] is not None:
+                            if not gamestate[piece[0] + (direction[0] * (i + 1))][piece[1] + (direction[1] * (i + 1))]['color'] == gamestate[piece[0]][piece[1]]['color']:
+                                moves.append([piece[0] + (direction[0] * (i + 1)), piece[1] + (direction[1] * (i + 1))])
+                            break
+                        else:
+                            moves.append([piece[0] + (direction[0] * (i + 1)), piece[1] + (direction[1] * (i + 1))])
+        elif gamestate[piece[0]][piece[1]]['type'] == 4:
+            for direction in self.queenDirections:
+                dirmoves = []
+                for i in range(8):
+                    if piece[0] + (direction[0] * (i + 1)) >= 0 and piece[0] + (direction[0] * (i + 1)) <= 7 and piece[1] + (direction[1] * (i + 1)) >= 0 and piece[1] + (direction[1] * (i + 1)) <= 7:
+                        captures[str([piece[0] + (direction[0] * (i + 1)), piece[1] + (direction[1] * (i + 1))])] = True
+                        if gamestate[piece[0] + (direction[0] * (i + 1))][piece[1] + (direction[1] * (i + 1))] is not None:
+                            if not gamestate[piece[0] + (direction[0] * (i + 1))][piece[1] + (direction[1] * (i + 1))]['color'] == gamestate[piece[0]][piece[1]]['color']:
+                                dirmoves.append([piece[0] + (direction[0] * (i + 1)), piece[1] + (direction[1] * (i + 1))])
+                            break
+                        else:
+                            dirmoves.append([piece[0] + (direction[0] * (i + 1)), piece[1] + (direction[1] * (i + 1))])
+                moves.append(dirmoves)
+        elif gamestate[piece[0]][piece[1]]['type'] == 5:
+            for direction in self.queenDirections:
+                if piece[0] + direction[0] >= 0 and piece[0] + direction[0] <= 7 and piece[1] + direction[1] >= 0 and piece[1] + direction[1] <= 7:
+                    possible = True
+                    for i in range(8):
+                        for j in range(8):
+                            if gamestate[i][j] is not None:
+                                if not gamestate[i][j]['color'] == gamestate[piece[0]][piece[1]]['color']:
+                                    if str([piece[0] + direction[0], piece[1] + direction[1]]) in gamestate[i][j]['captures']:
+                                        possible = False
+                            if not possible:
+                                break
+                        if not possible:
+                            break
+                    if possible:
+                        captures[str([piece[0] + direction[0], piece[1] + direction[1]])] = True
+                        if gamestate[piece[0] + direction[0]][piece[1] + direction[1]] is not None:
+                            if not gamestate[piece[0] + direction[0]][piece[1] + direction[1]]['color'] == gamestate[piece[0]][piece[1]]['color']:
+                                moves.append([piece[0] + direction[0], piece[1] + direction[1]])
+                        else:
+                            moves.append([piece[0] + direction[0], piece[1] + direction[1]])
+        
+        if gamestate[piece[0]][piece[1]]['type'] == 4:
+            moveCount = 0
+            for i in range(8):
+                moveCount += len(moves[i])
+        else:
+            moveCount = len(moves)
+        return moves, moveCount, captures
+
+
+    def checkCheck(self, gamestate, color = None):
         piecesCheck = 0
         check = None
         cantUncheck = False
@@ -166,27 +282,39 @@ class chess:
             for j in range(8):
                 if gamestate[i][j] is not None:
                     if gamestate[i][j]['type'] == 5:
-                        for k in range(8):
-                            for l in range(8):
-                                if gamestate[k][l] is not None:
-                                    if not gamestate[i][j]['color'] == gamestate[k][l]['color']:
-                                        if str([i, j]) in gamestate[k][l]['captures']:
-                                            piecesCheck += 1
-                                            check = [k, l]
-                                        if piecesCheck > 1:
-                                            cantUncheck = True
-                                            return check, cantUncheck
+                        if color is None:
+                            for k in range(8):
+                                for l in range(8):
+                                    if gamestate[k][l] is not None:
+                                        if not gamestate[i][j]['color'] == gamestate[k][l]['color']:
+                                            if str([i, j]) in gamestate[k][l]['captures']:
+                                                piecesCheck += 1
+                                                check = [k, l]
+                                            if piecesCheck > 1:
+                                                cantUncheck = True
+                                                return check, cantUncheck
+                        else:
+                            if gamestate[i][j]['color'] == color:
+                                for k in range(8):
+                                    for l in range(8):
+                                        if gamestate[k][l] is not None:
+                                            if not gamestate[i][j]['color'] == gamestate[k][l]['color']:
+                                                if str([i, j]) in gamestate[k][l]['captures']:
+                                                    piecesCheck += 1
+                                                    check = [k, l]
+                                                if piecesCheck > 1:
+                                                    cantUncheck = True
+                                                    return check, cantUncheck
         return check, cantUncheck
 
     def checkUncheck(self, piece, move):
         newgamestate = deepcopy(self.gamestate)
-        newgamestate[move[0]][move[1]] = newgamestate[piece[0]][piece[1]]
+        newgamestate[move[0]][move[1]] = deepcopy(newgamestate[piece[0]][piece[1]])
         newgamestate[piece[0]][piece[1]] = None
-        self.checkAllMoves(newgamestate, checking = True)
-        check, _ = self.checkCheck(newgamestate)
+        newgamestate = self.checkAllMovesCopy(newgamestate, checking = True)
+        check, pepis = self.checkCheck(newgamestate, (self.currentplayer + 1) % 2)
         if check is not None:
-            if self.gamestate[check[0]][check[1]]["color"] == self.gamestate[piece[0]][piece[1]]["color"]:
-                return True
+            return True
         return False
 
     def piece(self, type, color):
@@ -205,14 +333,22 @@ class chess:
 
     def constructboardstring(self):
         string = "<:a:878071110481117205><:b:878071110544003114><:c:878071110862766120><:d:878071110455939104><:e:878071110749532171><:f:878071110510465106><:g:878071110996987935><:h:878071110892146728>\n"
+        if self.intToEmote[0]:
+            string = ":black_large_square:" + string.replace('\n', '') + ":black_large_square:\n"
         for i in range(8):
+            if self.intToEmote[0]:
+                string += f"{self.intToEmote[i + 1]}"
             for j in range(8):
                 color = int(i % 2 == j % 2)
                 if self.gamestate[i][j] is None:
                     string += self.boardEmotes[color]
                 else:
                     string += self.pieceEmoteStrings[color][self.gamestate[i][j]['color']][self.gamestate[i][j]['type']]
+            if self.intToEmote[0]:
+                string += f"{self.intToEmote[i + 1]}"
             string += "\n"
+        if self.intToEmote[0]:
+            string += ":black_large_square:<:a:878071110481117205><:b:878071110544003114><:c:878071110862766120><:d:878071110455939104><:e:878071110749532171><:f:878071110510465106><:g:878071110996987935><:h:878071110892146728>:black_large_square:\n"
         return string
 
     def canMoveTo(self, space):
@@ -358,7 +494,7 @@ class chess:
                 self.gamestate[int(values[2][0])][int(values[2][1])]['firstmove'] = False
                 if self.gamestate[int(values[2][0])][int(values[2][1])]['type'] == 5:
                     self.kings[self.gamestate[int(values[2][0])][int(values[2][1])]['color']] = [values[2][0]][values[2][1]]
-                self.checkAllMoves(self.gamestate)
+                self.gamestate = self.checkAllMoves(self.gamestate)
                 self.check, self.cantUncheck = self.checkCheck(self.gamestate)
                 if self.promote == None:
                     if self.check == None:
@@ -366,6 +502,7 @@ class chess:
                         await self.constructmessage()
                     else:
                         await self.swapPlayers()
+                        self.gamestate = self.checkAllMoves(self.gamestate)
                         await self.constructmessage(self.kings[self.currentplayer], check = True)
                 else:
                     await self.constructmessage(self.promote, promote = True)
@@ -373,7 +510,7 @@ class chess:
             self.gamestate[int(values[1][0])][int(values[1][1])]['type'] = int(values[2][0])
             self.gamestate[int(values[1][0])][int(values[1][1])]['name'] = self.intToType[int(values[2][0])]
             self.promote = None
-            self.checkAllMoves(self.gamestate)
+            self.gamestate = self.checkAllMoves(self.gamestate)
             await self.swapPlayers()
             await self.constructmessage()
         elif values[0] == "queen":

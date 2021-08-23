@@ -201,7 +201,7 @@ class chess:
         return piece
 
     def updatePiece(self, piece):
-        self.gamestate[piece[0]][piece[1]]['name'] = self.intToType[type]
+        self.gamestate[piece[0]][piece[1]]['name'] = self.intToType[self.gamestate[piece[0]][piece[1]]['type']]
 
     def constructboardstring(self):
         string = "<:a:878071110481117205><:b:878071110544003114><:c:878071110862766120><:d:878071110455939104><:e:878071110749532171><:f:878071110510465106><:g:878071110996987935><:h:878071110892146728>\n"
@@ -315,7 +315,7 @@ class chess:
             end = True
         return options, end
 
-    async def constructmessage(self, piece = None, promote = False, moveQueen = None, check = None, checkType = None):
+    async def constructmessage(self, piece = None, promote = False, moveQueen = None, check = None, checkType = None, back = False):
         options, end = self.constructoptions(piece, promote = promote, moveQueen = moveQueen, check = check, checkType = checkType)
         if not end:
             options.append(SelectOption(label = f"Forfeit", value = f"{self.gameid}:forfeit"))
@@ -332,10 +332,14 @@ class chess:
         if check is not None:
             piss = ", you're in check!"
         if self.message == None:
-            self.message = await self.ctx.send(f"{self.constructboardstring()}{self.intToColor[self.currentplayer]}s turn\n-- {fart}{piss}", components = components)
+            self.message = await self.ctx.send(f"{self.constructboardstring()}{self.intToColor[self.currentplayer]}s turn ({self.players[self.currentplayer].mention})\n-- {fart}{piss}", components = components)
         else:
             if self.winner is None:
-                await self.message.edit(f"{self.constructboardstring()}{self.intToColor[self.currentplayer]}s turn\n-- {fart}{piss}", components = components)
+                if piece is None and promote == False and moveQueen is None and check is None and checkType is None and not back:
+                    await self.message.delete()
+                    self.message = await self.ctx.send(f"{self.constructboardstring()}{self.intToColor[self.currentplayer]}s turn ({self.players[self.currentplayer].mention})\n-- {fart}{piss}", components = components)
+                else:
+                    await self.message.edit(f"{self.constructboardstring()}{self.intToColor[self.currentplayer]}s turn ({self.players[self.currentplayer].mention})\n-- {fart}{piss}", components = components)
             else:
                 await self.message.edit(f"{self.constructboardstring()}WINNER: {self.intToColor[(self.currentplayer + 1) % 2]} ({self.winner.mention})", components = components)
 
@@ -345,7 +349,7 @@ class chess:
             await self.constructmessage([int(values[1][0]), int(values[1][1])])
         elif values[0] == "move":
             if values[2] == "back":
-                await self.constructmessage()
+                await self.constructmessage(back = True)
             else:
                 self.check = None
                 self.checkpieces = None
@@ -367,7 +371,7 @@ class chess:
                     await self.constructmessage(self.promote, promote = True)
         elif values[0] == "promote":
             self.gamestate[int(values[1][0])][int(values[1][1])]['type'] = int(values[2][0])
-            self.updatePiece([int(values[1][0])][int(values[1][1])])
+            self.gamestate[int(values[1][0])][int(values[1][1])]['name'] = self.intToType[int(values[2][0])]
             self.promote = None
             self.checkAllMoves(self.gamestate)
             await self.swapPlayers()
@@ -395,5 +399,3 @@ class chess:
     
     async def swapPlayers(self):
         self.currentplayer = (self.currentplayer + 1) % 2
-        if not self.singleplayer and self.winner is None:
-            await self.message.reply(f"{self.players[self.currentplayer].mention}", deleteafter = 1)

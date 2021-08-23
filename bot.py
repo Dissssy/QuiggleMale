@@ -8,7 +8,6 @@ training = False
 updaterrunning = False
 
 loop = asyncio.get_event_loop()
-tasks = {}
 currentConfirming = {}
 currentTTTgames = {}
 currentUltimateTTTgames = {}

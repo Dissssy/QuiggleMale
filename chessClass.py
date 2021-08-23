@@ -181,8 +181,6 @@ class chess:
                         i -= 1
                         x -= 1
                     i += 1
-                if gamestate[piece[0]][piece[1]]['type'] == 5:
-                    print(moves)
 
         if gamestate[piece[0]][piece[1]]['type'] == 4:
             moveCount = 0

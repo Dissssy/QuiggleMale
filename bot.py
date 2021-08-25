@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord_components import DiscordComponents, Button, ButtonStyle, ActionRow
 import time
 from os.path import getsize
-testmode = True
+testmode = False
 training = False
 updaterrunning = False
 

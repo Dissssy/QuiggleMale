@@ -508,7 +508,7 @@ class chess:
                 self.message = await self.ctx.send(f"{boardstring}{self.intToColor[self.currentplayer]}s turn ({self.players[self.currentplayer].mention})\n-- {fart}{piss}", components = components, file = discord.File(fp=image_binary, filename='image.png'))
         else:
             if self.winner is None:
-                if promote == False and moveQueen is None and checkType is None and not back and (piece is None or check is not None):
+                if moveQueen is None and checkType is None and not back and (piece is None or check is not None):
                     await self.message.delete()
                     with BytesIO() as image_binary:
                         self.constructboardimage().save(image_binary, 'PNG')

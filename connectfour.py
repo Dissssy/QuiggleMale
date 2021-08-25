@@ -203,9 +203,11 @@ class connectfour:
                         self._countwinningspaces()
                         playing = f"{self.getoverkillstring()}: {self.players[(self.current_player + 1) % 2].mention}"
                     if not self.training:
-                        await self.message.edit(f"{gridmessage}\n{playing}", components = components)
+                        await self.message.delete()
+                        self.message = await self.ctx.send(f"{gridmessage}\n{playing}", components = components)
                     elif self.winner is not None:
-                        await self.message.edit(f"{gridmessage}\n{playing}", components = components)
+                        await self.message.delete()
+                        self.message = await self.ctx.send(f"{gridmessage}\n{playing}", components = components)
             except Exception as e:
                 await self.ctx.send(f"{e}\n\n if length is too long, your board is too big", delete_after = 5)
                 self.failed = True
@@ -246,8 +248,8 @@ class connectfour:
     
     async def _swapPlayers(self):
         self.current_player = (self.current_player + 1) % 2
-        if not (self.singleplayer or self.ai) and self.winner is None:
-            await self.message.reply(f"{self.players[self.current_player].mention}", delete_after = 1)
+        # if not (self.singleplayer or self.ai) and self.winner is None:
+        #     await self.message.reply(f"{self.players[self.current_player].mention}", delete_after = 1)
 
     def _droppiece(self, index):
         if self.columnavailable[index]:

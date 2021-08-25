@@ -481,8 +481,11 @@ class chess:
             end = True
         return options, end
 
-    async def constructmessage(self, piece = None, promote = False, moveQueen = None, check = None, checkType = None, back = False):
-        options, end = self.constructoptions(piece, promote = promote, moveQueen = moveQueen, check = check, checkType = checkType)
+    async def constructmessage(self, piece = None, promote = False, moveQueen = None, check = None, checkType = None, back = False, end = False):
+        if not end:
+            options, end = self.constructoptions(piece, promote = promote, moveQueen = moveQueen, check = check, checkType = checkType)
+        else:
+            options = [SelectOption(label = f"Game over", value = f"{self.gameid}:gameover")]
         if not end:
             options.append(SelectOption(label = f"Forfeit", value = f"{self.gameid}:forfeit"))
             components = [ActionRow(Select(options = options, id = f"{self.gameid}", placeholder = f"Make your move {self.players[self.currentplayer].name}"))]
@@ -522,6 +525,13 @@ class chess:
                     self.constructboardimage().save(image_binary, 'PNG')
                     image_binary.seek(0)
                     self.message = await self.ctx.send(f"{boardstring}WINNER: {self.intToColor[(self.currentplayer + 1) % 2]} ({self.winner.mention})", components = components, file = discord.File(fp=image_binary, filename='image.png'))
+
+    async def forfeit(self, user):
+        if self.players[0].id == user.id:
+            self.winner = self.players[1]
+        else:
+            self.winner = self.players[0]
+        await self.constructmessage(end = True)
 
     async def set(self, value):
         values = value.split("|")

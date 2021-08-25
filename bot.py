@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord_components import DiscordComponents, Button, ButtonStyle, ActionRow
 import time
 from os.path import getsize
-testmode = False
+testmode = True
 training = False
 updaterrunning = False
 
@@ -85,7 +85,7 @@ async def c4(ctx, user: discord.User, width: int = 7, height: int = 6):
                 global loop
                 loop.create_task(confirmchallenge(ctx, user, f"{ctx.guild.id}{ctx.channel.id}{ctx.message.id}", "c4", ctx.author.id == user.id, specialdata = {"ai" : user.id == client.user.id, "dimensions" : [width, height]}))
             else:
-                await ctx.reply(f"miniumum is 4, max is 10", delete_after = 15)
+                await ctx.reply(f"miniumum is 4, max is 9", delete_after = 15)
         else:
             await ctx.reply("you cant challenge a bot... besides me", delete_after = 5)
     else:
@@ -115,18 +115,26 @@ async def rps(ctx, user: discord.User, rounds: int = 1):
         
 
 @client.command(hidden = True)
-async def r(ctx):
+async def r(ctx, *, args: str = ""):
     if ctx.author.id == owner:
+        args = args.split(" ")
         try:
             await ctx.message.delete()
         except:
             pass
         global training
-        if training:
-            await ctx.send("im training right now, either abort training or wait until later", delete_after = 5)
-        else:
-            if activity(True):
-                await ctx.send(f"Theres still activity{activity()}are you sure you want to restart?", components = [ActionRow(Button(label = "Yes", style = ButtonStyle.green, id = "restart:yes"), Button(label = "No", style = ButtonStyle.red, id = "restart:no"))])
+        if (activity(True) and not "y" in args) or (training and not "t" in args):
+            string = ""
+            delete_after = None
+            if activity(True) and not "y" in args:
+                string += f"Theres still activity{activity()}are you sure you want to restart?"
+                components = [ActionRow(Button(label = "Yes", style = ButtonStyle.green, id = "restart:yes"), Button(label = "No", style = ButtonStyle.red, id = "restart:no"))]
+            if training and not "t" in args:
+                string = string.replace("are you sure you want to restart?", "") + "im training right now, either abort training or wait until later"
+                components = []
+                delete_after = 5
+            await ctx.send(string, components = components, delete_after = delete_after)
+            if len(components) > 0 and not training:
                 while True:
                     interaction = await client.wait_for("button_click", check = lambda i: i.component.id.startswith("restart"))
                     if interaction.user.id == owner:
@@ -140,8 +148,8 @@ async def r(ctx):
                             await client.close()
                     else:
                         await interaction.respond(content = "you are not the owner")
-            else:
-                await client.close()
+        else:
+            await client.close()
 
 @client.command(hidden = True)
 async def resources(ctx):
@@ -297,11 +305,8 @@ async def confirmchallenge(ctx, user, gameid, gametype, singleplayer, rounds = 0
                 if response == "accept":
                     if gametype == "forfeit":
                         global currentChessGames
+                        await currentChessGames[gameid].forfeit(user)
                         currentChessGames.pop(gameid)
-                        try:
-                            await ctx.message.delete()
-                        except Exception as e:
-                            print(str(e))
                     elif gametype == "ttt":
                         loop.create_task(tictactoeGame(ctx, gameid, players, singleplayer))
                     elif gametype == "uttt":
@@ -574,7 +579,7 @@ def secondstotime(seconds):
                         unit = "year"
                         seconds = seconds / 365
     s = "s"
-    if seconds == 1:
+    if seconds > 0.99 and seconds <1.99:
         s = ""
     return f"{seconds:.0f} {unit}{s}"
 

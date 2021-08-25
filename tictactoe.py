@@ -59,19 +59,22 @@ class tictactoe:
             )
         else:
             if self.winner == None:
-                await self.message.edit(
+                await self.message.delete()
+                self.message = await self.ctx.send(
                     f"Player {self.current_player + 1} ({self.players[self.current_player].mention})'s turn!",
                     components = newcomponents
                 )
             else:
                 if not self.tie:
                     await self._swapPlayers()
-                    await self.message.edit(
+                    await self.message.delete()
+                    self.message = await self.ctx.send(
                         f"WINNER: Player {self.current_player + 1} ({self.players[self.current_player].mention})",
                         components = newcomponents
                     )
                 else:
-                    await self.message.edit(
+                    await self.message.delete()
+                    self.message = await self.ctx.send(
                         f"TIE!",
                         components = newcomponents
                     )

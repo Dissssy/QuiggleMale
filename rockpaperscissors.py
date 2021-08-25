@@ -49,13 +49,18 @@ class rockpaperscissors:
             self.message = await self.ctx.send(f"{ping[0]} : {self.wins[0]}\n{ping[1]} : {self.wins[1]}\nround {self.currentround}/{self.rounds}", components = components)
         else:
             if self.totalwinner is None:
-                await self.message.edit(f"{ping[0]} : {self.wins[0]}\n{ping[1]} : {self.wins[1]}\nround {self.currentround}/{self.rounds}", components = components)
+                if self.selections[0] is None and self.selections[1] is None:
+                    await self.message.delete()
+                    self.message = await self.ctx.send(f"{ping[0]} : {self.wins[0]}\n{ping[1]} : {self.wins[1]}\nround {self.currentround}/{self.rounds}", components = components)
+                else:
+                    await self.message.edit(f"{ping[0]} : {self.wins[0]}\n{ping[1]} : {self.wins[1]}\nround {self.currentround}/{self.rounds}", components = components)
             else:
                 if self.totalwinner == "tie":
                     self.totalwinner = None
                     self.rounds += 1
                 else:
-                    await self.message.edit(f"winner: {self.totalwinner.mention}\n{self.wins[self._convert_player_to_index(self.totalwinner)]} to {self.wins[(self._convert_player_to_index(self.totalwinner) + 1) % 2]}", components = components)
+                    await self.message.delete()
+                    self.message = await self.ctx.send(f"winner: {self.totalwinner.mention}\n{self.wins[self._convert_player_to_index(self.totalwinner)]} to {self.wins[(self._convert_player_to_index(self.totalwinner) + 1) % 2]}", components = components)
     
     async def set(self, selection, player):
         if self.selections[self._convert_player_to_index(player)] is None:

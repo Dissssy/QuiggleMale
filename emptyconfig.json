@@ -1,1 +1,7 @@
-{"token": "token for actual bot", "testtoken": "token for a testing bot", "prefix" : "put your prefix here!", "owner": "put your discord id here (google how to get it if you dont know)", "gps": 40}
+{
+    "token": "token for actual bot",
+    "testtoken": "token for a testing bot",
+    "prefix": "put your prefix here!",
+    "owner": "put your discord id here (google how to get it if you dont know)",
+    "gps": 40
+}

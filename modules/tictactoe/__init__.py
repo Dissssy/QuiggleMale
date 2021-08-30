@@ -1,6 +1,7 @@
 import hikari
 from lightbulb import slash_commands
 
+
 class TicTacToe(slash_commands.SlashCommand):
     @property
     def options(self):
@@ -9,7 +10,7 @@ class TicTacToe(slash_commands.SlashCommand):
                 name="player",
                 description="Your opponent",
                 type=hikari.OptionType.USER,
-                is_required=True
+                is_required=True,
             )
         ]
 
@@ -24,6 +25,7 @@ class TicTacToe(slash_commands.SlashCommand):
     async def callback(self, context):
         print(context.options["player"].value)
         await context.respond("`raise NotImplementedError`")
+
 
 def init(quiggle):
     quiggle.add_slash_command(TicTacToe)

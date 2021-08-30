@@ -10,6 +10,7 @@ from sqlalchemy import create_engine
 l = logging.getLogger("main")
 l.setLevel(logging.INFO)
 
+
 def load_module_folder(bot, path: str = "modules"):
     """Load modules from specific path"""
     modules = {}
@@ -25,6 +26,7 @@ def load_module_folder(bot, path: str = "modules"):
         l.info(f"Loaded module {file}")
         modules[file] = module
     return modules
+
 
 quiggle = lightbulb.Bot(token=config.token, slash_commands_only=True)
 modules = load_module_folder(quiggle)

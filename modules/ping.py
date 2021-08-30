@@ -2,6 +2,7 @@ import hikari
 import lightbulb
 from lightbulb import slash_commands
 
+
 class Ping(slash_commands.SlashCommand):
     @property
     def options(self):
@@ -17,6 +18,7 @@ class Ping(slash_commands.SlashCommand):
 
     async def callback(self, context):
         await context.respond("Pong!", flags=hikari.messages.MessageFlag.EPHEMERAL)
+
 
 def init(quiggle):
     quiggle.add_slash_command(Ping)

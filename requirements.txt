@@ -1,0 +1,4 @@
+hikari
+black
+hikari-lightbulb
+sqlalchemy[sqlite]

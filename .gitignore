@@ -138,3 +138,9 @@ dmypy.json
 cython_debug/
 
 .history/
+config.py
+
+__version__.py
+
+.vsls.json
+token.txt

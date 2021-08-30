@@ -1,30 +1,28 @@
 # -*- coding: utf-8 -*-
 from setuptools import find_packages, setup
-from setuptools_rust import Binding, RustExtension, Strip
 import os
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-with open("requirements.txt","rb") as fh:
-    install_requires=[l.strip() for l in fh]
+with open("requirements.txt", "r") as fh:
+    install_requires = [l.strip() for l in fh]
 
 extras_require = {}
 
 setup(
     use_scm_version={"write_to": "__version__.py"},
     name="QuigglePrime",
-    author="",
+    author="The Republic of Petoria",
     author_email="",
-    description="",
+    description="Discord bot :)",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/Dissssy/QuiggleMale",
-
     packages=find_packages(),
     entry_points={},
-    install_requires=[],
-    setup_requires=["setuptools","setuptools-scm", ],
+    install_requires=install_requires,
+    setup_requires=["setuptools", "setuptools-scm"],
     extras_require=extras_require,
     classifiers=[
         "License :: OSI Approved :: MIT License",

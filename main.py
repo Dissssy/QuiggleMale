@@ -26,7 +26,7 @@ def load_module_folder(bot, path: str = "modules"):
         modules[file] = module
     return modules
 
-quiggle = lightbulb.Bot(token=config.token, prefix="something")
+quiggle = lightbulb.Bot(token=config.token, slash_commands_only=True)
 modules = load_module_folder(quiggle)
 
 quiggle.db = create_engine("sqlite+pysqlite:///:memory:", echo=True, future=True)

@@ -1,5 +1,6 @@
 import hikari
 from lightbulb import slash_commands
+import config
 
 
 class TicTacToe(slash_commands.SlashCommand):
@@ -20,10 +21,11 @@ class TicTacToe(slash_commands.SlashCommand):
 
     @property
     def enabled_guilds(self):
-        return None
+        return config.enabled_guilds
 
     async def callback(self, context):
-        print(context.options["player"].value)
+        print(type(context.member))
+        print(type(context.user))
         await context.respond("`raise NotImplementedError`")
 
 
